@@ -8,13 +8,10 @@ in an unauthenticated manor (NOTE: anyone with the URL to the server can send re
 * Create a Google Service account within your project [here](https://console.cloud.google.com/iam-admin/serviceaccounts) 
 * Create a private key for your Google Service account
     * On the newly created service account page, click the `Create Key` at the bottom, and choose `JSON` to download the key
-* Add the correct credentials to the `.env` file in the root of the project (or, if deploying to Heroku, add these to the `Config Vars` for the application)
-    * **GOOGLE_SHEETS_PROJECT_ID**: The `project_id` field in the JSON key created above
-    * **GOOGLE_SHEETS_PRIVATE_KEY**: The `private_key` field in the JSON key created above
-    * **GOOGLE_SHEETS_PRIVATE_KEY_ID**: The `private_key_id` field in the JSON key created above 
-    * **GOOGLE_SHEETS_CLIENT_EMAIL**: The `client_email` field in the JSON key created above
-    * **GOOGLE_SHEETS_CLIENT_ID**: The `client_id` field in the JSON key created above
-    * **GOOGLE_SHEETS_CERT_URL**: The `client_x509_cert_url` field in the JSON key created above
+* Configure your [Google Secret Manager](https://cloud.google.com/secret-manager/docs/configuring-secret-manager)
+* Add the private_key and client_email values to Google Secret Manager, following [these steps](https://cloud.google.com/secret-manager/docs/creating-and-accessing-secrets) under "Console"
+* Change constant values of const `PRIVATE_KEY_SECRET_VERSION` and `CLIENT_EMAIL_SECRET_VERSION` to your secret versions
+
     
 ## Share spreadsheet with Google Service account
 To be able to write/read to/from the spreadsheet, you need to share the spreadsheet with the created Google Service
@@ -24,11 +21,14 @@ permissions if you only plan on reading from the spreadsheet and don't want anyo
 view + edit permissions if you want to be able to manipulate the spreadsheet).
     
 ## Usage:
+* `cd functions`: All operations must be done inside the `/functions` folder
 * `npm install` : Install necessary node modules
-* `npm start` : Start server
+* `npm serve` : Deploy functions locally
+* `npm deploy`: Deploys functions to Google Cloud
 
 ## TODO:  
 * Add endpoints: create/modify/delete sheet, get/update cell, delete row
+* Update API Documentation to the new V4 google-spreadsheet response
 
 ## API Documentation
 
@@ -53,25 +53,10 @@ Gets information about the entire spreadsheet.
 
 **Content example** :
 ```json
-{
-    "id": "https://spreadsheets.google.com/feeds/worksheets/:sheetId/private/full",
-    "title": "Spreadsheet Title",
-    "updated": "2018-02-12T03:13:12.451Z",
-    "author": {
-        "name": "nick.prozorovsky",
-        "email": "nick.prozorovsky@gmail.com"
-    },
-    "worksheets": [
-        {
-            "url": "https://spreadsheets.google.com/feeds/worksheets/:sheetId/od6",
-            "id": "od6",
-            "title": "Sheet1",
-            "rowCount": 1037,
-            "colCount": 26,
-            "_links": []
-        }
-    ]
-}
+{"id": doc.spreadsheetId,
+ "title": doc.title,
+ "locale": doc.locale,
+ "timeZone": doc.timeZone}
 ```
 
 ### Error Response
@@ -114,12 +99,12 @@ invalid sheet index has been provided, an empty 200 response will be returned
 **Content example** :
 ```json
 {
-    "url": "https://spreadsheets.google.com/feeds/worksheets/:sheetId/od6",
-    "id": "od6",
-    "title": "Sheet1",
-    "rowCount": 1037,
-    "colCount": 26,
-    "_links": []
+    "sheetId": sheet.sheetId,
+    "title": sheet.title,
+    "index": sheet.index,
+    "sheetType": sheet.sheetType,
+    "headers": sheet.headerValues
+
 }
 ```
 
